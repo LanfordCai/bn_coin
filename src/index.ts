@@ -126,6 +126,7 @@ app.post('/api/filter-coins', async (req: Request, res: Response) => {
         return res.json({
             success: true,
             total: filteredCoins.length,
+            totalCoins: data.length,
             data: filteredCoins
         });
     } catch (error) {
