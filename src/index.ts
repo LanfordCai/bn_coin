@@ -137,6 +137,47 @@ app.post('/api/filter-coins', async (req: Request, res: Response) => {
     }
 });
 
+app.get('/api/networks', async (_req: Request, res: Response) => {
+    try {
+        const binanceResponse = await fetchBinanceData();
+        
+        // Create a Map to store network code -> name mapping
+        const networksMap: NetworkInfo = {};
+        
+        // Iterate through all coins and their networks
+        binanceResponse.data.forEach((coin: Coin) => {
+            coin.networkList.forEach((network: Network) => {
+                // Only update if the network name doesn't exist or is shorter
+                // This ensures we get the most detailed name when the same network appears multiple times
+                if (!networksMap[network.network] || 
+                    networksMap[network.network].length < network.name.length) {
+                    networksMap[network.network] = network.name;
+                }
+            });
+        });
+
+        // Convert to array and sort by network code
+        const sortedNetworks = Object.entries(networksMap)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .reduce((obj, [key, value]) => ({
+                ...obj,
+                [key]: value
+            }), {});
+
+        return res.json({
+            success: true,
+            total: Object.keys(networksMap).length,
+            data: sortedNetworks
+        });
+    } catch (error) {
+        console.error('Error processing request:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 }); 
